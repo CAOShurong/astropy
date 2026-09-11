@@ -67,3 +67,38 @@ def test_completeness_toplevel__all__():
         if f.is_dir() and f.name != "extern"
     }
     assert module_names == module_dirs
+
+
+def test_package_data_excludes_c_sources():
+    """Ensure setuptools package data does not include C source files (#20104)."""
+    try:
+        from setuptools import find_packages
+        from setuptools.command.build_py import build_py
+        from setuptools.dist import Distribution
+    except ImportError:
+        pytest.skip("setuptools is required for build configuration test")
+
+    pyproject = Path(__file__).parents[3] / "pyproject.toml"
+    if not pyproject.exists():
+        pytest.skip("pyproject.toml not found, likely running against installed wheel")
+
+    dist = Distribution()
+    dist.parse_config_files()
+    assert not dist.include_package_data
+
+    packages = find_packages(include=["astropy*"], exclude=["astropy._dev*"])
+    dist.packages = packages
+    cmd = build_py(dist)
+    cmd.finalize_options()
+    cmd.manifest_files = {}
+
+    c_files = []
+    for pkg in packages:
+        pkg_dir = pkg.replace(".", "/")
+        for f in cmd.find_data_files(pkg, pkg_dir):
+            normalized = f.replace("\\", "/")
+            if normalized.endswith(".c"):
+                c_files.append(normalized)
+
+    assert c_files == ["astropy/wcs/tests/extension/wcsapi_test.c"]
+

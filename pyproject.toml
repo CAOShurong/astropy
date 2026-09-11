@@ -222,7 +222,7 @@ imagetest = [
 ]
 
 [tool.setuptools]
-include-package-data = true
+include-package-data = false
 
 [tool.setuptools.packages.find]
 include = ["astropy*"]
@@ -241,7 +241,7 @@ namespaces = true
 "astropy" = ["astropy.cfg", "CITATION"]
 "astropy.cosmology" = ["*.ecsv"]
 "astropy.tests.figures" = ["*.json"]
-"astropy.wcs" = ["include/*/*.h"]
+"astropy.wcs" = ["include/*.h", "include/*/*.h"]
 "astropy.wcs.tests" = ["extension/*.c"]
 
 [tool.setuptools_scm]

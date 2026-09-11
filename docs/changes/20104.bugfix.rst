@@ -1,0 +1,1 @@
+Prevent C source files and Cython files from being included as package data in binary wheels while preserving them in source distributions.
