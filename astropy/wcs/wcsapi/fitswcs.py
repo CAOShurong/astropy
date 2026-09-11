@@ -353,11 +353,21 @@ class FITSWCSAPIMixin(BaseLowLevelWCS, HighLevelWCSMixin):
         return pixel_arrays
 
     def pixel_to_world_values(self, *pixel_arrays):
+        if len(pixel_arrays) != self.pixel_n_dim:
+            raise ValueError(
+                f"Number of pixel inputs ({len(pixel_arrays)}) does not match expected"
+                f" ({self.pixel_n_dim})"
+            )
         pixel_arrays = self._out_of_bounds_to_nan(pixel_arrays)
         world = self.all_pix2world(*pixel_arrays, 0)
         return world[0] if self.world_n_dim == 1 else tuple(world)
 
     def world_to_pixel_values(self, *world_arrays):
+        if len(world_arrays) != self.world_n_dim:
+            raise ValueError(
+                f"Number of world inputs ({len(world_arrays)}) does not match expected"
+                f" ({self.world_n_dim})"
+            )
         # avoid circular import
         from astropy.wcs.wcs import NoConvergence
 

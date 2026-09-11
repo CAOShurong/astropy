@@ -1,0 +1,4 @@
+`WCS.pixel_to_world`, `pixel_to_world_values`, and `values_to_high_level_objects`
+now validate that the number of coordinate inputs matches the expected number of
+dimensions, raising an explicit `ValueError` when an unexpected number of
+arguments (such as a single packed coordinate array) is passed.

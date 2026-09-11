@@ -22,10 +22,12 @@ class DoubleLowLevelWCS(BaseLowLevelWCS):
     """
 
     def pixel_to_world_values(self, *pixel_arrays):
-        return [np.asarray(pix) * 2 for pix in pixel_arrays]
+        res = [np.asarray(pix) * 2 for pix in pixel_arrays]
+        return res[0] if self.world_n_dim == 1 else res
 
     def world_to_pixel_values(self, *world_arrays):
-        return [np.asarray(world) / 2 for world in world_arrays]
+        res = [np.asarray(world) / 2 for world in world_arrays]
+        return res[0] if self.pixel_n_dim == 1 else res
 
 
 class SimpleDuplicateWCS(DoubleLowLevelWCS, HighLevelWCSMixin):
@@ -148,19 +150,19 @@ class SerializedWCS(DoubleLowLevelWCS, HighLevelWCSMixin):
 
     @property
     def pixel_n_dim(self):
-        return 2
+        return 1
 
     @property
     def world_n_dim(self):
-        return 2
+        return 1
 
     @property
     def world_axis_physical_types(self):
-        return ["pos.eq.ra", "pos.eq.dec"]
+        return ["pos.eq.ra"]
 
     @property
     def world_axis_units(self):
-        return ["deg", "deg"]
+        return ["deg"]
 
     @property
     def world_axis_object_components(self):
@@ -355,3 +357,55 @@ def test_world_to_array_index_nan():
     assert isinstance(res2, tuple)
     assert len(res2) == 2
     assert res2 == (np.iinfo(int).min, 5)
+
+
+def test_pixel_to_world_input_count_validation():
+    # Regression test for #19230: passing an unexpected number of arguments
+    # (such as a single packed (N, 2) array instead of separate pixel axis arrays)
+    # should raise a clear ValueError.
+    wcs = WCS(naxis=2)
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape("Number of pixel inputs (1) does not match expected (2)"),
+    ):
+        wcs.pixel_to_world(np.zeros((5, 2)))
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape("Number of pixel inputs (1) does not match expected (2)"),
+    ):
+        wcs.pixel_to_world(1)
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape("Number of pixel inputs (3) does not match expected (2)"),
+    ):
+        wcs.pixel_to_world(1, 2, 3)
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape("Number of pixel inputs (1) does not match expected (2)"),
+    ):
+        wcs.array_index_to_world(np.zeros((5, 2)))
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape("Number of pixel inputs (1) does not match expected (2)"),
+    ):
+        wcs.pixel_to_world_values(np.zeros((5, 2)))
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape("Number of world inputs (1) does not match expected (2)"),
+    ):
+        wcs.world_to_pixel_values(10)
+
+
+def test_values_to_high_level_objects_count_validation():
+    wcs = SkyCoordDuplicateWCS()
+    with pytest.raises(
+        ValueError,
+        match=re.escape("Number of world values (2) does not match expected (4)"),
+    ):
+        values_to_high_level_objects(1, 2, low_level_wcs=wcs)

@@ -357,6 +357,12 @@ def values_to_high_level_objects(
     components = low_level_wcs.world_axis_object_components
     classes = low_level_wcs.world_axis_object_classes
 
+    if len(world_values) != len(components):
+        raise ValueError(
+            f"Number of world values ({len(world_values)}) does not match expected"
+            f" ({len(components)})"
+        )
+
     # Deserialize classes
     if getattr(low_level_wcs, "serialized_classes", False):
         classes_new = {}
@@ -416,6 +422,11 @@ class HighLevelWCSMixin(BaseHighLevelWCS):
         return pixel_values
 
     def pixel_to_world(self, *pixel_arrays):
+        if len(pixel_arrays) != self.low_level_wcs.pixel_n_dim:
+            raise ValueError(
+                f"Number of pixel inputs ({len(pixel_arrays)}) does not match expected"
+                f" ({self.low_level_wcs.pixel_n_dim})"
+            )
         values, masks = MaskedNDArray._get_data_and_masks(pixel_arrays)
         # Compute the world coordinate values
         world_values = self.low_level_wcs.pixel_to_world_values(*values)
